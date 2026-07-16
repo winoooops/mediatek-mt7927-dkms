@@ -5,7 +5,8 @@ This is a personal fork of the upstream
 project. Upstream supplies the driver; this fork keeps local Fedora/Nobara
 recovery notes and configuration context. See
 [FC44_MT7927_RECOVERY_LOG.md](FC44_MT7927_RECOVERY_LOG.md) for the concise
-session record.
+session record and [FORK_NOTICE.md](FORK_NOTICE.md) for GPL-2.0 distribution
+requirements.
 
 DKMS driver for MediaTek MT7927 (Filogic 380) - WiFi 7 + Bluetooth 5.4 on Linux.
 
