@@ -1,28 +1,66 @@
-# Javier Tia
+# MediaTek MT7927 DKMS — personal fork
 
-Senior Systems Engineer - Linux Kernel · Security · Yocto · CI/CD
-
-🌍 Costa Rica - Remote
-📬 javier@jetm.me
-🔗 [LinkedIn](https://cr.linkedin.com/in/javiertia) · [Blog](https://jetm.github.io/blog)
-
-**Currently available for new opportunities** - freelance or full-time, fully remote.
-
----
-
-# mediatek-mt7927-dkms
+This is a personal fork of the upstream
+[jetm/mediatek-mt7927-dkms](https://github.com/jetm/mediatek-mt7927-dkms)
+project. Upstream supplies the driver; this fork keeps local Fedora/Nobara
+recovery notes and configuration context. See
+[FC44_MT7927_RECOVERY_LOG.md](FC44_MT7927_RECOVERY_LOG.md) for the concise
+session record.
 
 DKMS driver for MediaTek MT7927 (Filogic 380) - WiFi 7 + Bluetooth 5.4 on Linux.
 
 Builds out-of-tree btusb/btmtk (Bluetooth) and mt76 (WiFi) kernel modules with
 device ID and firmware patches not yet in mainline. Supports kernels 6.17+.
 
-> **Maintenance notice:** This project is actively maintained. Response times
-> may be delayed - my current focus is on other projects that can give me a
-> steady income so I can continue giving my best here. Patches are being
-> submitted upstream; once merged, this package will be archived. Sponsorship
-> does not make sense for a project with a planned end date - if you want to
-> help, pass my CV to someone with hiring power: https://jetm.github.io/blog/cv/
+## Quick recovery: Fedora / Nobara
+
+Use the pre-built RPM when possible. It is much smaller than the source-build
+path, which downloads a full Linux source tarball.
+
+```bash
+# Confirm that the PCIe Wi-Fi device is MediaTek MT7927.
+lspci -nn | grep -i '14c3:7927'
+
+# Download the matching Fedora RPM from the upstream release, then install it.
+sudo dnf install ./mediatek-mt7927-dkms-*.fc44.noarch.rpm
+
+# MT7927 is the hardware name; mt7925e is the Wi-Fi kernel module.
+sudo modprobe mt7925e
+
+# Confirm that NetworkManager sees a Wi-Fi interface.
+nmcli device status
+```
+
+If Secure Boot rejects the module, follow the Secure Boot section below. A
+reboot is the safest way to load a newly installed Wi-Fi and Bluetooth driver;
+avoid reloading `btusb` unless necessary because some MT6639 Bluetooth devices
+need a full power drain to recover after a reload.
+
+## Local case: Nobara 44 on MSI B850MOPER
+
+This machine has the PCIe device `14c3:7927` and booted Nobara 44 kernel
+`7.1.3-200.nobara.fc44.x86_64`. The old v2.11 DKMS driver only had Fedora 43
+builds, so Wi-Fi did not appear after the OS/kernel upgrade.
+
+The successful recovery was:
+
+```bash
+# Install upstream v2.13's Fedora 44 RPM, then load the correct module.
+sudo dnf install ./mediatek-mt7927-dkms-2.13-1.fc44.noarch.rpm
+sudo modprobe mt7925e
+nmcli device status
+```
+
+This restored `wlp9s0`. Once v2.13 was verified on Fedora 44, the obsolete
+v2.11 DKMS registration was removed to prevent future failed builds:
+
+```bash
+sudo dkms remove -m mediatek-mt7927 -v 2.11 --all
+sudo systemctl reset-failed dkms.service && sudo systemctl start dkms.service
+```
+
+Removing v2.11 removes its custom modules for old Fedora 43 kernels; retain a
+known-good snapshot or wired connection before doing so.
 
 ## Status
 
